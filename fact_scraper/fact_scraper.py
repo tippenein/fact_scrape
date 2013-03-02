@@ -22,13 +22,16 @@
             reality
 '''
 
+import os
 from bs4 import BeautifulSoup
 import urllib2
+import StringIO
+import gzip, zlib
 
 __version__ = "0.1"
 __author__ = "tippenein"
 
-URL = "http://www.politifact.com"
+URL = "http://politifact.com"
 AGENT = "{}/{}".format(__name__, __version__)
 
 class Scrape_Teh_Truth(object):
@@ -47,31 +50,35 @@ class Fetch(object):
     def __init__(self, url):
         self.url = url
 
-    def __getitem__(self, x):
-        return self.urls[x]
+    def decode(self, page):
+        encoding = page.info().get("Content-Encoding")
+        if encoding in ('gzip', 'x-gzip', 'deflate'):
+            content = page.read()
+            if encoding == 'deflate':
+                data = StringIO.StringIO(zlib.decompress(content))
+            else:
+                data = gzip.GzipFile('', 'rb', 9, StringIO.StringIO(content))
+            page = data.read()
 
-    def _addHeaders(self, request):
-        request.add_header("User-Agent", AGENT)
-
-    def open(self):
-        url = self.url
-        try:
-            request = urllib2.Request(url)
-            handle = urllib2.build_opener()
-        except IOError:
-            return None
-        return (request, handle)
+        return page
 
     def fetch(self):
-        request, handle = self.open()
-        self._addHeaders(request)
-        if handle:
+        url = self.url
+        if os.environ.get("DEBUG"):
+            soup = BeautifulSoup(open("test/example.html"), "html.parser")
+        else:
             try:
-                content = unicode(handle.open(request).read(), "utf-8",
-                        errors="replace")
-                soup = BeautifulSoup(content)
-            except urllib2.HTTPError, error:
-                sys.exit("{}: soup fail".format(error))
+                opener = urllib2.build_opener()
+                opener.addheaders = [('User-Agent', AGENT),
+                ('Accept-Encoding', 'gzip,deflate')]
+                usock = opener.open(url)
+                url = usock.geturl()
+                data = self.decode(usock)
+                usock.close()
+                soup = BeautifulSoup(data)
+            except:
+                sys.exit("troubles in Gotham, Batman")
+        print soup.find_all('div', {'class': 'scoretableContainer'})
 
 def main():
     print "filthy bureaucratic scum"
