@@ -27,6 +27,7 @@ from bs4 import BeautifulSoup
 import urllib2
 import StringIO
 import gzip, zlib
+import sqlite3
 
 __version__ = "0.1"
 __author__ = "tippenein"
@@ -37,13 +38,31 @@ AGENT = "{}/{}".format(__name__, __version__)
 class Scrape_Teh_Truth(object):
 
     def __init__(self, url):
-        self.url = url
+        self.url  = url
         self.urls = []
+        # use db uri supplied by environment perhaps
+        self.conn = sqlite3.connect('../database.db')
+        self.db   = self.conn.cursor()
+        self.init_db()
+
+    def init_db(self):
+        self.db.executescript(open('schema.sql', 'r').read())
 
     def scrape(self):
         page = Fetch(self.url)
-        page.fetch()
+        info = page.extract()
+        self.parse_info(info)
 
+    def insert(self, name, pers_link, truthiness):
+        query = '''
+                INSERT INTO personalities (name) VALUES ('{}')
+                '''.format(name)
+        self.db.execute(query)
+
+    def parse_info(self, info):
+        for d in info:
+            self.insert(d['name'], d['pers_link'], d['truthiness'])
+        self.conn.commit()
 
 class Fetch(object):
 
@@ -65,7 +84,7 @@ class Fetch(object):
     def fetch(self):
         url = self.url
         if os.environ.get("DEBUG"):
-            soup = BeautifulSoup(open("test/example.html"), "html.parser")
+            soup = BeautifulSoup(open("tests/example.html"), "html.parser")
         else:
             try:
                 opener = urllib2.build_opener()
@@ -78,7 +97,29 @@ class Fetch(object):
                 soup = BeautifulSoup(data)
             except:
                 sys.exit("troubles in Gotham, Batman")
-        print soup.find_all('div', {'class': 'scoretableContainer'})
+        return soup
+
+
+    def extract(self):
+        soup = self.fetch()
+        info = []
+        for container in soup.find_all('div', {'class': 'scoretableContainer'}):
+            d = {}
+            source = container.find('p', {'class' : 'quotesource'})
+            truth = container.find('div', {'class' : 'meter'})
+            name = source.text
+            pers_link = source.a.get('href')
+            truthiness = truth.img.get('alt')
+            d['name'] = name
+            d['pers_link'] = pers_link
+            d['truthiness'] = truthiness
+            info.append(d)
+
+        for d in info:
+            for k in d.keys():
+                print d[k]
+
+        return info
 
 def main():
     print "filthy bureaucratic scum"

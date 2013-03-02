@@ -1,7 +1,8 @@
 drop table if exists personalities;
 create table personalities (
   p_id integer primary key autoincrement,
-  name text not null
+  name text not null,
+  link text
 );
 
 drop table if exists statements;
@@ -10,11 +11,5 @@ create table statements (
   sdate date,
   p_id integer,
   text text not null,
-  score_id integer,
-);
-
-drop table if exists scores;
-create table scores (
-  score_id integer primary key autoincrement,
-  p_id integer,
+  score_id integer
 );
