@@ -11,7 +11,7 @@ class Personality(Base):
     name = Column(String)
     affiliation = Column(String)
 
-    def __init__(self, id, name, affiliation):
+    def __init__(self, id, name, affiliation=None):
         self.id = id
         self.name = name
         self.affiliation = affiliation
@@ -34,7 +34,7 @@ class Statement(Base):
         self.claim = claim
         self.truthiness = truthiness
         self.personality = personality
-        self.data = date
+        self.date = date
 
     def __repr__(self):
         return "<Statement('{}','{}', '{}')\

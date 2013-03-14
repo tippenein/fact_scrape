@@ -50,11 +50,18 @@ class Scrape_Teh_Truth(object):
         self.session = Session()
 
     def scrape(self):
+        ''' Scrapes the front page for new statements '''
         page = Fetch(self.url)
         info = page.extract()
-        self.session.add( Personality(info['name'], None) )
-        self.session.add( Statement(info['statement'], info['truthiness']) )
+        for d in info:
+            self.session.add( Personality(d['name'], None) )
+            self.session.add( Statement(d['statement'], d['truthiness']) )
 
+    def scrape_all(self):
+        ''' scrapes the archived statements 
+        http://www.politifact.com/truth-o-meter/statements/?page=2
+        '''
+        pass
     def insert(self, name, pers_link, truthiness):
         pass
 
@@ -103,14 +110,26 @@ class Fetch(object):
             truth = container.find('div', {'class' : 'meter'})
             name = source.text
             # for testing
-            statement = "hooha"
+            claim = "hooha"
             truthiness = truth.img.get('alt')
             d['name'] = name
-            d['truthiness'] = truthiness
-            d['statement'] = statement
+            d['truthiness'] = self._truth_to_int(truthiness)
+            d['claim'] = claim
             info.append(d)
 
         return info
+
+    def _truth_to_int(self, s):
+        ''' returns the integer representation of a 'truth string'
+        '''
+        truth_rank = {
+                'Pants on Fire!': 0,
+                'False'         : 1,
+                'Mostly False'  : 2,
+                'Half-True'     : 3,
+                'Mostly True'   : 4,
+                'True'          : 5 }
+        return truth_rank[s]
 
 def main():
     print "filthy bureaucratic scum"
