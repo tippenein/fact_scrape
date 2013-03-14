@@ -27,7 +27,10 @@ from bs4 import BeautifulSoup
 import urllib2
 import StringIO
 import gzip, zlib
-import sqlite3
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from models import Statement, Personality
 
 __version__ = "0.1"
 __author__ = "tippenein"
@@ -35,34 +38,25 @@ __author__ = "tippenein"
 URL = "http://politifact.com"
 AGENT = "{}/{}".format(__name__, __version__)
 
+# use db uri supplied by environment perhaps
+db = create_engine('sqlite:///database.db', echo=True)
+Session = sessionmaker(bind=db)
+
 class Scrape_Teh_Truth(object):
 
     def __init__(self, url):
         self.url  = url
         self.urls = []
-        # use db uri supplied by environment perhaps
-        self.conn = sqlite3.connect('../database.db')
-        self.db   = self.conn.cursor()
-        self.init_db()
-
-    def init_db(self):
-        self.db.executescript(open('schema.sql', 'r').read())
+        self.session = Session()
 
     def scrape(self):
         page = Fetch(self.url)
         info = page.extract()
-        self.parse_info(info)
+        self.session.add( Personality(info['name'], None) )
+        self.session.add( Statement(info['statement'], info['truthiness']) )
 
     def insert(self, name, pers_link, truthiness):
-        query = '''
-                INSERT INTO personalities (name) VALUES ('{}')
-                '''.format(name)
-        self.db.execute(query)
-
-    def parse_info(self, info):
-        for d in info:
-            self.insert(d['name'], d['pers_link'], d['truthiness'])
-        self.conn.commit()
+        pass
 
 class Fetch(object):
 
@@ -108,16 +102,13 @@ class Fetch(object):
             source = container.find('p', {'class' : 'quotesource'})
             truth = container.find('div', {'class' : 'meter'})
             name = source.text
-            pers_link = source.a.get('href')
+            # for testing
+            statement = "hooha"
             truthiness = truth.img.get('alt')
             d['name'] = name
-            d['pers_link'] = pers_link
             d['truthiness'] = truthiness
+            d['statement'] = statement
             info.append(d)
-
-        for d in info:
-            for k in d.keys():
-                print d[k]
 
         return info
 
