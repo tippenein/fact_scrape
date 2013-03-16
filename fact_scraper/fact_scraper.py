@@ -26,13 +26,12 @@
 import os
 import time
 import urllib2
+import datetime
 import StringIO
 import gzip, zlib
 from bs4 import BeautifulSoup
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-from models import Statement, Personality
+from models import Statement, Personality, session_bind
 
 __version__ = "0.1"
 __author__ = "tippenein"
@@ -40,11 +39,7 @@ __author__ = "tippenein"
 URL = "http://politifact.com"
 AGENT = "{}/{}".format(__name__, __version__)
 
-
-# use db uri supplied by environment perhaps
-db = create_engine('sqlite:///database.db', echo=True)
-Session = sessionmaker(bind=db)
-session = Session()
+session = session_bind()()
 
 
 class Scrape_Teh_Truth(object):
@@ -60,16 +55,17 @@ class Scrape_Teh_Truth(object):
         info = page.extract()
         print info
         for d in info:
-            print "inserting"
             _personality = Personality(
                     name = d['name'],
-                    affiliation = None)
-            _statement   = Statement(
+                    affiliation = 'democrat')
+            _statement = Statement(
                     claim = d['claim'],
                     truthiness = d['truthiness'],
                     personality = _personality,
-                    date = "now")
+                    date = datetime.date(2011, 3, 21))
             session.add(_statement)
+
+        session.commit()
 
     def scrape_all(self):
         ''' scrapes the archived statements

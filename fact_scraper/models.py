@@ -1,8 +1,16 @@
 from sqlalchemy import Column, Integer, Text, String, Date, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
+engine = create_engine('sqlite:///statements.db', echo=True)
 Base = declarative_base()
+
+
+def session_bind():
+    return sessionmaker(bind=engine)
+
 
 class Personality(Base):
     __tablename__ = 'personality'
@@ -11,25 +19,26 @@ class Personality(Base):
     name = Column(String)
     affiliation = Column(String)
 
-    def __init__(self, name, affiliation=None):
+    def __init__(self, name, affiliation):
         self.name = name
         self.affiliation = affiliation
 
     def __repr__(self):
         return "<Personality('{}' - '{}')>".format(self.name, self.affiliation)
 
+
 class Statement(Base):
     '''claim, truthiness, personality, date
     '''
-    __tablename__ = 'statement'
+    __tablename__ = 'statements'
 
     id = Column(Integer, primary_key=True)
-    claim = Column(Text)
-    truthiness = Column(Integer) # mapped from 0 to 6, 0 = lie, 6=truth
-    date = Column(Date)
     personality_id = Column(Integer, ForeignKey('personality.id'))
-    personality = relationship('Personality', 
-            backref = backref('statements', lazy='dynamic'))
+    personality = relationship("Personality",
+                               backref=backref('statements', lazy='dynamic'))
+    claim = Column(Text)
+    truthiness = Column(Integer)  # mapped from 0 to 6, 0 = lie, 6=truth
+    date = Column(Date)
 
     def __init__(self, claim, truthiness, personality, date):
         self.claim = claim
