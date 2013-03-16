@@ -11,8 +11,7 @@ class Personality(Base):
     name = Column(String)
     affiliation = Column(String)
 
-    def __init__(self, id, name, affiliation=None):
-        self.id = id
+    def __init__(self, name, affiliation=None):
         self.name = name
         self.affiliation = affiliation
 
@@ -20,6 +19,8 @@ class Personality(Base):
         return "<Personality('{}' - '{}')>".format(self.name, self.affiliation)
 
 class Statement(Base):
+    '''claim, truthiness, personality, date
+    '''
     __tablename__ = 'statement'
 
     id = Column(Integer, primary_key=True)

@@ -4,18 +4,19 @@
 # author : tippenein
 
 #check front page daily for new personalities
-# for each personality not found in personalities table, use /personalities/<Person>/statements/<?page=#>
+# for each personality not found in personalities table,
+# use /personalities/<Person>/statements/<?page=#>
 # else insert each new event into an existing table
 
 # tables - Personalities, Scores, Statements
-# statuses | True | Mostly True | Half True | Mostly False | False | Pants on Fire
 
 '''
 .scoretableContainer
     .scoretableStatement
         .mugshot
         .meter
-            a(href=actual statement) /truth-o-meter/statements/2013/mar/10/personality/specific statement...
+            a(href=actual statement)
+                /truth-o-meter/statements/2013/mar/10/personality/specific statement...
                 img(alt="True|False|etc")
             p.quote
         h2
@@ -23,10 +24,11 @@
 '''
 
 import os
-from bs4 import BeautifulSoup
+import time
 import urllib2
 import StringIO
 import gzip, zlib
+from bs4 import BeautifulSoup
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -38,32 +40,54 @@ __author__ = "tippenein"
 URL = "http://politifact.com"
 AGENT = "{}/{}".format(__name__, __version__)
 
+
 # use db uri supplied by environment perhaps
 db = create_engine('sqlite:///database.db', echo=True)
 Session = sessionmaker(bind=db)
+session = Session()
+
 
 class Scrape_Teh_Truth(object):
 
-    def __init__(self, url):
-        self.url  = url
+    def __init__(self, url=None):
+        self.url = url
         self.urls = []
-        self.session = Session()
 
-    def scrape(self):
+    def scrape(self, url):
         ''' Scrapes the front page for new statements '''
-        page = Fetch(self.url)
+        print "scraping -> {}".format(url)
+        page = Fetch(url)
         info = page.extract()
+        print info
         for d in info:
-            self.session.add( Personality(d['name'], None) )
-            self.session.add( Statement(d['statement'], d['truthiness']) )
+            print "inserting"
+            _personality = Personality(
+                    name = d['name'],
+                    affiliation = None)
+            _statement   = Statement(
+                    claim = d['claim'],
+                    truthiness = d['truthiness'],
+                    personality = _personality,
+                    date = "now")
+            session.add(_statement)
 
     def scrape_all(self):
-        ''' scrapes the archived statements 
-        http://www.politifact.com/truth-o-meter/statements/?page=2
+        ''' scrapes the archived statements
         '''
-        pass
+        url = 'http://www.politifact.com/truth-o-meter/statements/?page='
+        # artificial cap for testing
+        i = 1; cap=20
+        while i < cap:
+            try:
+                self.scrape(url + i)
+                print "sleeping 1 second to avoid flooding"
+                time.sleep(1)
+            except:
+                break
+
     def insert(self, name, pers_link, truthiness):
         pass
+
 
 class Fetch(object):
 
@@ -90,7 +114,7 @@ class Fetch(object):
             try:
                 opener = urllib2.build_opener()
                 opener.addheaders = [('User-Agent', AGENT),
-                ('Accept-Encoding', 'gzip,deflate')]
+                                     ('Accept-Encoding', 'gzip,deflate')]
                 usock = opener.open(url)
                 url = usock.geturl()
                 data = self.decode(usock)
@@ -100,18 +124,21 @@ class Fetch(object):
                 sys.exit("troubles in Gotham, Batman")
         return soup
 
-
     def extract(self):
         soup = self.fetch()
         info = []
         for container in soup.find_all('div', {'class': 'scoretableContainer'}):
             d = {}
-            source = container.find('p', {'class' : 'quotesource'})
-            truth = container.find('div', {'class' : 'meter'})
+            source = container.find('p', {'class':'quotesource'})
+            truth = container.find('div', {'class':'meter'})
             name = source.text
-            # for testing
-            claim = "hooha"
+            print truth.prettify()
+            claim = truth.get('h2')
+            print "claim: {}".format(claim)
+            #TODO get date from regexing the link
+            link = truth.a.get('href')
             truthiness = truth.img.get('alt')
+
             d['name'] = name
             d['truthiness'] = self._truth_to_int(truthiness)
             d['claim'] = claim
@@ -136,6 +163,12 @@ def main():
 
 if __name__ == '__main__':
     import sys
-    scraper = Scrape_Teh_Truth(URL)
-    scraper.scrape()
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option("-a", "--all", action="store_true", default=False, help="scrape the archived statements")
+    (options, args) = parser.parse_args()
+
+    scraper = Scrape_Teh_Truth()
+    scraper.scrape(URL)
+    # scraper.scrape_all() if options else scraper.scrape(URL)
     main()
