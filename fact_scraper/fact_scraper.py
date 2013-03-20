@@ -31,7 +31,8 @@ import StringIO
 import gzip, zlib
 from bs4 import BeautifulSoup
 
-from models import Statement, Personality, session_bind
+from models import Statement, Personality, Session, Base, engine
+
 
 __version__ = "0.1"
 __author__ = "tippenein"
@@ -39,7 +40,8 @@ __author__ = "tippenein"
 URL = "http://politifact.com"
 AGENT = "{}/{}".format(__name__, __version__)
 
-session = session_bind()()
+session = Session()
+Base.metadata.create_all(engine)
 
 
 class Scrape_Teh_Truth(object):

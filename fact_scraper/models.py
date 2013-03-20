@@ -1,16 +1,12 @@
-from sqlalchemy import Column, Integer, Text, String, Date, ForeignKey
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Column, Integer, Text, String, Date, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine('sqlite:///statements.db', echo=True)
 Base = declarative_base()
-
-
-def session_bind():
-    return sessionmaker(bind=engine)
-
+engine = create_engine('sqlite:///statements.db', echo=True)
+Session = sessionmaker(bind=engine)
 
 class Personality(Base):
     __tablename__ = 'personality'
@@ -34,7 +30,7 @@ class Statement(Base):
 
     id = Column(Integer, primary_key=True)
     personality_id = Column(Integer, ForeignKey('personality.id'))
-    personality = relationship("Personality",
+    personality = relationship(Personality,
                                backref=backref('statements', lazy='dynamic'))
     claim = Column(Text)
     truthiness = Column(Integer)  # mapped from 0 to 6, 0 = lie, 6=truth
