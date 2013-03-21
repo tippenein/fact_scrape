@@ -61,7 +61,7 @@ class Scrape_Teh_Truth(object):
             for d in info:
                 _personality = Personality(
                         name = d['name'],
-                        affiliation = d['affiliation'])
+                        pers_link= d['pers_link'])
                 _statement = Statement(
                         claim = d['claim'],
                         truthiness = d['truthiness'],
@@ -129,18 +129,17 @@ class Fetch(object):
         info = []
         for container in soup.find_all('div', {'class': 'scoretableContainer'}):
             d = {}
-            source = container.find('p', {'class':'quotesource'})
             truth = container.find('div', {'class':'meter'})
-            name = source.text
-            claim = "nuts"
-            print truth.prettify()
-            #TODO get date from regexing the link
+            truthiness = truth.img.get('alt')
             link = truth.a.get('href')
             date_string = link.split('/')[3:6] # get the date from /blah/blah/year/month/day
-            print create_datetime(date_string)
-            truthiness = truth.img.get('alt')
+            claim = container.find('h2').string
+            source = container.find('p', {'class':'quotesource'})
+            name = source.text
+            pers_link = source.a.get('href')
 
             d['name'] = name
+            d['pers_link'] = pers_link
             d['truthiness'] = self._truth_to_int(truthiness)
             d['claim'] = claim
             d['date'] = date_string

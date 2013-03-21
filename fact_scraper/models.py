@@ -13,14 +13,14 @@ class Personality(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    affiliation = Column(String)
+    pers_link = Column(String)
 
-    def __init__(self, name, affiliation):
+    def __init__(self, name, pers_link):
         self.name = name
-        self.affiliation = affiliation
+        self.pers_link = pers_link
 
     def __repr__(self):
-        return "<Personality('{}' - '{}')>".format(self.name, self.affiliation)
+        return "<Personality('{}' - '{}')>".format(self.name, self.pers_link)
 
 
 class Statement(Base):
