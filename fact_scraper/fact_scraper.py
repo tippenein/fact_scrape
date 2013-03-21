@@ -26,13 +26,12 @@
 import os
 import time
 import urllib2
-import datetime
 import StringIO
 import gzip, zlib
 from bs4 import BeautifulSoup
 
 from models import Statement, Personality, Session, Base, engine
-
+from util import create_datetime
 
 __version__ = "0.1"
 __author__ = "tippenein"
@@ -50,24 +49,27 @@ class Scrape_Teh_Truth(object):
         self.url = url
         self.urls = []
 
-    def scrape(self, url):
+    def scrape(self, url, test=False):
         ''' Scrapes the front page for new statements '''
         print "scraping -> {}".format(url)
         page = Fetch(url)
         info = page.extract()
         print info
-        for d in info:
-            _personality = Personality(
-                    name = d['name'],
-                    affiliation = 'democrat')
-            _statement = Statement(
-                    claim = d['claim'],
-                    truthiness = d['truthiness'],
-                    personality = _personality,
-                    date = datetime.date(2011, 3, 21))
-            session.add(_statement)
+        if test:
+            pass
+        else:
+            for d in info:
+                _personality = Personality(
+                        name = d['name'],
+                        affiliation = d['affiliation'])
+                _statement = Statement(
+                        claim = d['claim'],
+                        truthiness = d['truthiness'],
+                        personality = _personality,
+                        date = create_datetime(d['date']))
+                session.add(_statement)
 
-        session.commit()
+            session.commit()
 
     def scrape_all(self):
         ''' scrapes the archived statements
@@ -130,16 +132,18 @@ class Fetch(object):
             source = container.find('p', {'class':'quotesource'})
             truth = container.find('div', {'class':'meter'})
             name = source.text
+            claim = "nuts"
             print truth.prettify()
-            claim = truth.get('h2')
-            print "claim: {}".format(claim)
             #TODO get date from regexing the link
             link = truth.a.get('href')
+            date_string = link.split('/')[3:6] # get the date from /blah/blah/year/month/day
+            print create_datetime(date_string)
             truthiness = truth.img.get('alt')
 
             d['name'] = name
             d['truthiness'] = self._truth_to_int(truthiness)
             d['claim'] = claim
+            d['date'] = date_string
             info.append(d)
 
         return info
@@ -157,16 +161,20 @@ class Fetch(object):
         return truth_rank[s]
 
 def main():
-    print "filthy bureaucratic scum"
-
-if __name__ == '__main__':
-    import sys
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("-a", "--all", action="store_true", default=False, help="scrape the archived statements")
+    parser.add_option("-a", "--all", dest='all', action="store_true", default=False, help="scrape the archived statements")
+    parser.add_option("-t", "--test", dest='test', action="store_true", default=False, help="Don't commit to database")
     (options, args) = parser.parse_args()
 
     scraper = Scrape_Teh_Truth()
-    scraper.scrape(URL)
-    # scraper.scrape_all() if options else scraper.scrape(URL)
+    if options.test:
+        scraper.scrape(URL, test=True)
+    elif options.all:
+        scraper.scrape_all() if options else scraper.scrape(URL)
+    else:
+        scraper.scrape(URL)
+
+if __name__ == '__main__':
+    import sys
     main()
