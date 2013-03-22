@@ -45,3 +45,13 @@ class Statement(Base):
     def __repr__(self):
         return "<Statement('{}','{}', '{}')\
                     >".format(self.claim, self.truthiness, self.personality)
+
+def get_or_create(session, model, **kwargs):
+    ''' don't duplicate rows
+    '''
+    instance = session.query(model).filter_by(**kwargs).first()
+    if instance:
+        return instance
+    else:
+        instance = model(**kwargs)
+        return instance

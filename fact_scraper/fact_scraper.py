@@ -30,7 +30,7 @@ import StringIO
 import gzip, zlib
 from bs4 import BeautifulSoup
 
-from models import Statement, Personality, Session, Base, engine
+from models import Statement, Personality, Session, Base, engine, get_or_create
 from util import create_datetime
 
 __version__ = "0.1"
@@ -62,14 +62,15 @@ class Scrape_Teh_Truth(object):
                 _personality = Personality(
                         name = d['name'],
                         pers_link= d['pers_link'])
+                _personality = get_or_create(session, Personality, name=d['name'])
                 _statement = Statement(
                         claim = d['claim'],
                         truthiness = d['truthiness'],
                         personality = _personality,
                         date = create_datetime(d['date']))
                 session.add(_statement)
+                session.commit()
 
-            session.commit()
 
     def scrape_all(self):
         ''' scrapes the archived statements
