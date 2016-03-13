@@ -22,14 +22,21 @@ source-repository head
 library
   hs-source-dirs: src
   exposed-modules:
-      Scraper
+      Politifact.Scraper
   build-depends:
       base ==4.*
+    , cassava
     , HandsomeSoup
     , hxt
+    , persistent
+    , persistent-template
+    , persistent-sqlite
+    , text
+    , time
   default-language: Haskell2010
   ghc-prof-options: -threaded -rtsopts -with-rtsopts=-N
   ghc-options: -Wall
+    -fwarn-unused-imports -fno-warn-missing-signatures
 
 executable scrape-the-truth
   hs-source-dirs: executable
@@ -38,7 +45,8 @@ executable scrape-the-truth
       base -any
     , scrape-the-truth -any
   default-language: Haskell2010
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:
+    -fwarn-unused-imports -fno-warn-missing-signatures -threaded -rtsopts -with-rtsopts=-N
 
 test-suite tests
   type:                exitcode-stdio-1.0
@@ -54,4 +62,5 @@ test-suite tests
   other-modules:
       ScrapeTheTruth
       ScrapeTheTruthSpec
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: 
+    -threaded -rtsopts -with-rtsopts=-N

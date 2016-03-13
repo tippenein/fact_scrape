@@ -1,12 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Scraper where
+module Politifact.Scraper where
 
 import Text.HandsomeSoup
 import Text.XML.HXT.Core
 
-url :: String
-url = "http://www.politifact.com/truth-o-meter/statements/?page="
+baseUrl = "http://www.politifact.com"
+
+statementUrl = "/truth-o-meter/statements/?page="
 
 data Statement
   = Statement
@@ -20,7 +21,7 @@ buildStatement = fmap (\(a,b,c) -> Statement a b c)
 
 statementsForPage :: Int -> IO [Statement]
 statementsForPage i = do
-  let doc = fromUrl (url ++ show i)
+  let doc = fromUrl (baseUrl ++ statementUrl ++ show i)
   truths <- runX $ doc >>> css "div.meter img" ! "alt"
   names <- runX $ doc >>> css "div.mugshot img" ! "alt"
   statements <- runX $ doc >>> css "p.statement__text a" ! "href"

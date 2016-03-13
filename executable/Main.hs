@@ -1,6 +1,6 @@
 module Main where
 
-import qualified Scraper
+import qualified Politifact.Scraper as Scraper
 
 main :: IO ()
 main = do
