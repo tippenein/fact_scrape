@@ -1,6 +1,8 @@
 module Main where
 
-import qualified Scraper as Scraper
+import qualified Scraper
 
 main :: IO ()
-main = Scraper.main
+main = do
+  d <- Scraper.statementsForPage 1
+  mapM_ print d
