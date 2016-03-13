@@ -1,8 +1,23 @@
-### Scraper / Crawler to analyze political figures and how much they lie
-
-Analyze politifact, factcheck.org and (maybe other sources?) to generate a running total of truthiness
-
-- www.politifact.com
-- http://factcheck.org/<archives> (more detailed and harder to scrape for truth / false but possibly more interesting )
+scrape_the_truth
+-----
 
 
+``` sh
+# Update Cabal's list of packages.
+cabal update
+
+# Initialize a sandbox and install the package's dependencies.
+make install
+
+# Configure & build the package.
+make build
+
+# Test package.
+make test
+
+# Run executable.
+make run
+
+# Start REPL.
+make repl
+```
