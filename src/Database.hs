@@ -15,8 +15,9 @@ module Database where
 import Data.Time.Clock (UTCTime (..))
 import Data.Text (Text, unpack)
 import Database.Persist
-import Database.Persist.Sqlite hiding (Statement)
+import Database.Persist.Sqlite
 import Database.Persist.TH
+-- import Database.Esqueleto
 import GHC.Generics
 import Data.Time.Calendar (Day)
 import Control.Monad (mapM_)
@@ -39,12 +40,6 @@ PersonStatement json
     deriving Eq Show Generic
 |]
 
--- PersonStatement
---     person Person
---     content Text
---     statedOn UTCTime
---     truthValue Text
---     deriving Eq Show Generic
 persistValue (Entity _ v) = v
 
 migrateDb:: IO ()
@@ -67,26 +62,29 @@ findOrCreatePersonByName name = do
       return $ Person name
     Just person -> return $ persistValue person
 
+insertStatement :: PoliticalStatement -> IO ()
 insertStatement s = do
   person <- findOrCreatePersonByName (name s)
   runDb $ insert_ $ PersonStatement person (truth s) (statedOn s) (statementLink s)
 
-insertStatements :: [Statement] -> IO ()
+insertStatements :: [PoliticalStatement] -> IO ()
 insertStatements statements = do
-  mapM_ (\s -> insertStatement s) statements
+  mapM_ insertStatement statements
 
 selectPersons :: IO [Person]
 selectPersons = do
   dbPersons <- runDb $ selectList [] []
   return $ map persistValue dbPersons
 
+
+-- TODO fix this asap
 selectStatements :: Maybe Text -> IO [PersonStatement]
 selectStatements name = do
-  ms <- runDb $ selectList [] []
-  let meats = map persistValue ms
+  s <- runDb $ selectList [] []
+  let statements = map persistValue s
   case name of
-    Nothing -> return meats
-    Just n  -> return $ filterName n meats
+    Nothing -> return statements
+    Just n  -> return $ filterName n statements
 
 filterName query = filter (\a -> query == (personName . personStatementPerson) a)
 

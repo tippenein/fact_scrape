@@ -37,6 +37,7 @@ library
     , persistent
     , persistent-template
     , persistent-sqlite
+    , esqueleto
     , pipes
     , text
     , time

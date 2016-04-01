@@ -6,6 +6,7 @@ import Database
 import Server
 import Politifact.Scraper as Scraper
 
+seedDb :: IO ()
 seedDb = do
   migrateDb
   insertStatements =<< Scraper.getAll

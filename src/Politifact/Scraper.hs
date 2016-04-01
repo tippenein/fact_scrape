@@ -14,17 +14,17 @@ baseUrl = "http://www.politifact.com"
 
 statementUrl = "/truth-o-meter/statements/?page="
 
-data Statement
-  = Statement
+data PoliticalStatement
+  = PoliticalStatement
   { truth         :: T.Text
   , name          :: T.Text
   , statedOn      :: Day
   , statementLink :: T.Text
   } deriving (Show)
 
-buildStatement :: [(String,String,String)] -> [Statement]
+buildStatement :: [(String,String,String)] -> [PoliticalStatement]
 buildStatement = fmap (\(a,b,c) ->
-  Statement {
+  PoliticalStatement {
     truth = (T.pack a),
     name = (T.pack b),
     statementLink = (T.pack c),
@@ -53,7 +53,7 @@ monthFromString s =
     "oct" -> 10
     "nov" -> 11
     "dec" -> 12
-statementsForPage :: Int -> IO [Statement]
+statementsForPage :: Int -> IO [PoliticalStatement]
 statementsForPage i = do
   let doc = fromUrl (baseUrl ++ statementUrl ++ show i)
   truths <- runX $ doc >>> css "div.meter img" ! "alt"
