@@ -1,8 +1,11 @@
 module Main where
 
-import qualified Politifact.Scraper as Scraper
+import Politifact.Scraper as Scraper
+import Database
+
+seedDb = do
+  migrateDb
+  insertStatements =<< Scraper.getAll
 
 main :: IO ()
-main = do
-  d <- Scraper.statementsForPage 1
-  mapM_ print d
+main = seedDb
