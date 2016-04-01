@@ -53,6 +53,7 @@ monthFromString s =
     "oct" -> 10
     "nov" -> 11
     "dec" -> 12
+
 statementsForPage :: Int -> IO [PoliticalStatement]
 statementsForPage i = do
   let doc = fromUrl (baseUrl ++ statementUrl ++ show i)

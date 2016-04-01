@@ -1,6 +1,7 @@
 scrape_the_truth
 -----
 
+[![Build Status](https://secure.travis-ci.org/tippenein/scrape_the_truth.png)](http://travis-ci.org/tippenein/scrape_the_truth)
 
 ``` sh
 # Update Cabal's list of packages.
