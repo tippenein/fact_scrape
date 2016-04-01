@@ -5,7 +5,6 @@ module Politifact.Scraper where
 import qualified Data.Text as T
 import Pipes
 import Data.Time.Calendar (fromGregorian, Day)
-import Control.Monad (mapM)
 import Control.Concurrent (threadDelay)
 import Text.HandsomeSoup
 import Text.XML.HXT.Core

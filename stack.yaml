@@ -1,5 +1,5 @@
 flags: {}
 packages:
-- 'scrape-the-truth'
+- '.'
 extra-deps: []
 resolver: lts-5.8
