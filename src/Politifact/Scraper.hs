@@ -4,6 +4,7 @@ module Politifact.Scraper where
 
 import qualified Data.Text as T
 import Pipes
+import Data.Time.Calendar (fromGregorian, Day)
 import Control.Monad (mapM)
 import Control.Concurrent (threadDelay)
 import Text.HandsomeSoup
@@ -17,12 +18,41 @@ data Statement
   = Statement
   { truth         :: T.Text
   , name          :: T.Text
+  , statedOn      :: Day
   , statementLink :: T.Text
   } deriving (Show)
 
 buildStatement :: [(String,String,String)] -> [Statement]
-buildStatement = fmap (\(a,b,c) -> Statement (T.pack a) (T.pack b) (T.pack c))
+buildStatement = fmap (\(a,b,c) ->
+  Statement {
+    truth = (T.pack a),
+    name = (T.pack b),
+    statementLink = (T.pack c),
+    statedOn = pullDate (T.pack c)}
+  )
 
+pullDate :: T.Text -> Day
+pullDate c = fromGregorian y m d
+  where
+    y = read (url !! 3) :: Integer
+    m = monthFromString $ url !! 4
+    d = read (url !! 5) :: Int
+    url = map (T.unpack) $ T.splitOn "/" c
+
+monthFromString s = 
+  case s of
+    "jan" -> 1
+    "feb" -> 2
+    "mar" -> 3
+    "apr" -> 4
+    "may" -> 5
+    "jun" -> 6
+    "jul" -> 7
+    "aug" -> 8
+    "sep" -> 9
+    "oct" -> 10
+    "nov" -> 11
+    "dec" -> 12
 statementsForPage :: Int -> IO [Statement]
 statementsForPage i = do
   let doc = fromUrl (baseUrl ++ statementUrl ++ show i)

@@ -18,6 +18,7 @@ import Database.Persist
 import Database.Persist.Sqlite hiding (Statement)
 import Database.Persist.TH
 import GHC.Generics
+import Data.Time.Calendar (Day)
 import Control.Monad (mapM_)
 
 import Politifact.Scraper
@@ -25,13 +26,14 @@ import Politifact.Scraper
 runDb = runSqlite "statements.db"
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Person
+Person json
     name Text
     deriving Eq Show Generic
 
-PersonStatement
+PersonStatement json
     person Person
     truthValue Text
+    statedOn Day
     statementLink Text
     UniqueStatement person statementLink
     deriving Eq Show Generic
@@ -67,11 +69,26 @@ findOrCreatePersonByName name = do
 
 insertStatement s = do
   person <- findOrCreatePersonByName (name s)
-  runDb $ insert_ $ PersonStatement person (truth s) (statementLink s)
+  runDb $ insert_ $ PersonStatement person (truth s) (statedOn s) (statementLink s)
 
 insertStatements :: [Statement] -> IO ()
 insertStatements statements = do
   mapM_ (\s -> insertStatement s) statements
+
+selectPersons :: IO [Person]
+selectPersons = do
+  dbPersons <- runDb $ selectList [] []
+  return $ map persistValue dbPersons
+
+selectStatements :: Maybe Text -> IO [PersonStatement]
+selectStatements name = do
+  ms <- runDb $ selectList [] []
+  let meats = map persistValue ms
+  case name of
+    Nothing -> return meats
+    Just n  -> return $ filterName n meats
+
+filterName query = filter (\a -> query == (personName . personStatementPerson) a)
 
 -- insertStatementsConsumer = do
 --   runEffect $ for Scraper.getAll $ \statement -> do
