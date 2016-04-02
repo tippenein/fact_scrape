@@ -3,7 +3,7 @@
 module Politifact.Scraper where
 
 import qualified Data.Text as T
-import Pipes
+-- import Pipes
 import Data.Time.Calendar (fromGregorian, Day)
 import Control.Concurrent (threadDelay)
 import Text.HandsomeSoup
@@ -53,17 +53,18 @@ monthFromString s =
     "nov" -> 11
     "dec" -> 12
 
-statementsForPage :: Int -> IO [PoliticalStatement]
-statementsForPage i = do
-  let doc = fromUrl (baseUrl ++ statementUrl ++ show i)
+-- statementsFor :: Int -> IO [PoliticalStatement]
+statementsFor doc = do
   truths <- runX $ doc >>> css "div.meter img" ! "alt"
   names <-  runX $ doc >>> css "div.mugshot img" ! "alt"
   statements <- runX $ doc >>> css "p.statement__text a" ! "href"
   return $ buildStatement (zip3 truths names statements)
 
+docFromUrl i = fromUrl (baseUrl ++ statementUrl ++ show i)
+
 -- getAll :: Proxy p => Producer p [Statement] IO ()
 getAll = do
-  s <- mapM (\i -> threadDelay 1000000 >> statementsForPage i) [1] -- 196
+  s <- mapM (\i -> threadDelay 1000000 >> statementsFor (docFromUrl i)) [1..2] -- 196 total
   return $ concat s
 
 -- getAllProducer= do
