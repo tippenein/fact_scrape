@@ -3,7 +3,8 @@ module Server (runServer, app) where
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Either
-import Data.Text (Text)
+import Data.Text (Text, pack)
+import Data.List (group, sort)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
@@ -17,8 +18,14 @@ server :: Server TruthApi
 server =
        listPersons
   :<|> listStatements
+  :<|> listTruthiness
 
 type Handler a = EitherT ServantErr IO a
+
+listTruthiness :: Text -> [(String, Int)]
+listTruthiness person_name = do
+  ms <- liftIO $ Database.selectStatements (Just person_name)
+  return $ [ (truthValue c, length g) | g@(c:_) <- group $ sort ms]
 
 listPersons :: Handler [Person]
 listPersons =

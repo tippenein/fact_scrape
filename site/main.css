@@ -1,0 +1,19 @@
+.person-table {
+  border-left: 12px solid #120D6D;
+  margin-left: 0px;
+  padding-left: 0px;
+}
+.person {
+  margin-left: 0px;
+  padding: 6px;
+  border-bottom: 4px solid #120D6D;
+}
+.active {
+  background-color: #0CB350;
+}
+
+body {
+  background-color: var(--color-primary-1);
+  font-size: 24;
+  font-family: 'Raleway', sans-serif;
+}
