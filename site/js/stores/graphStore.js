@@ -35,7 +35,8 @@ var GraphStore = Fluxxor.createStore({
       }
       ];
     var rows = payload.map(function(stat) {
-      return [stat.truthValue, stat.total]
+      console.log(stat)
+      return [stat[1].tVal, stat[1].total]
     })
 
     this.loading = false;

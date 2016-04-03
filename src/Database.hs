@@ -12,15 +12,16 @@
 {-# LANGUAGE TypeFamilies               #-}
 module Database where
 
-import Data.Time.Clock (UTCTime (..))
+-- import Data.Time.Clock (UTCTime (..))
 import Data.Text (Text, unpack)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
+import Data.List (groupBy)
 -- import Database.Esqueleto
 import GHC.Generics
 import Data.Time.Calendar (Day)
-import Control.Monad (mapM_)
+-- import Control.Monad (mapM_)
 
 import Politifact.Scraper
 
@@ -39,6 +40,10 @@ PersonStatement json
     UniqueStatement person statementLink
     deriving Eq Show Generic
 |]
+
+groupByTruth = groupBy (\a b -> personStatementTruthValue a == personStatementTruthValue b)
+instance Ord PersonStatement where
+  (PersonStatement _ t1 _ _ ) `compare` (PersonStatement _ t2 _ _) = t1 `compare` t2
 
 persistValue (Entity _ v) = v
 

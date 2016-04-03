@@ -25,7 +25,7 @@ buildStatement :: [(String,String,String)] -> [PoliticalStatement]
 buildStatement = fmap (\(a,b,c) ->
   PoliticalStatement {
     truth = (T.pack a),
-    name = (T.pack b),
+    name = T.strip $ (T.pack b),
     statementLink = (T.pack c),
     statedOn = pullDate (T.pack c)}
   )
@@ -52,14 +52,18 @@ monthFromString s =
     "oct" -> 10
     "nov" -> 11
     "dec" -> 12
+    _     -> error "oh noes"
 
--- statementsFor :: Int -> IO [PoliticalStatement]
+statementsFor :: HtmlDoc -> IO [PoliticalStatement]
 statementsFor doc = do
   truths <- runX $ doc >>> css "div.meter img" ! "alt"
   names <-  runX $ doc >>> css "div.mugshot img" ! "alt"
   statements <- runX $ doc >>> css "p.statement__text a" ! "href"
   return $ buildStatement (zip3 truths names statements)
 
+type HtmlDoc = IOSArrow XmlTree XmlTree
+
+docFromUrl :: Integer -> HtmlDoc
 docFromUrl i = fromUrl (baseUrl ++ statementUrl ++ show i)
 
 -- getAll :: Proxy p => Producer p [Statement] IO ()

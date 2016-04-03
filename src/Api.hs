@@ -1,17 +1,21 @@
 {-# LANGUAGE DataKinds     #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Api where
 
+import GHC.Generics
+import Data.Aeson
 import Data.Proxy
 import Data.Text (Text)
 import Database
 import Servant.API
 
-data PersonTruthiness = PersonTruthiness 
-  { truthValue :: String
-  , total :: Integer
-  }
+data PersonTruthiness = PersonTruthiness
+  { tVal :: Text
+  , total :: Int
+  } deriving (Show, ToJSON, Generic, Eq)
 
 truthApi :: Proxy TruthApi
 truthApi = Proxy
@@ -22,13 +26,15 @@ type TruthApi =
   :<|> ListTruthiness
 
 type ListPersons = "persons" :> Get '[JSON] [Person]
-type ListTruthiness = 
-     "persons" 
-  :> Capture "person_name"
-  :> "truthiness" 
-  :> Get '[JSON] [(String, Int)]
 
 type ListStatements =
      "statements"
   :> QueryParam "person_name" Text
   :> Get '[JSON] [PersonStatement]
+
+type ListTruthiness =
+     "persons"
+  :> "truthiness"
+  :> QueryParam "person_name" Text
+  :> Get '[JSON] [(Person, PersonTruthiness)]
+

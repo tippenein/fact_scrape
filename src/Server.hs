@@ -3,8 +3,8 @@ module Server (runServer, app) where
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Either
-import Data.Text (Text, pack)
-import Data.List (group, sort)
+import Data.Text (Text)
+import Data.List (sort)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors
@@ -22,10 +22,18 @@ server =
 
 type Handler a = EitherT ServantErr IO a
 
-listTruthiness :: Text -> [(String, Int)]
+
+listTruthiness :: Maybe Text -> Handler [(Person, PersonTruthiness)]
 listTruthiness person_name = do
-  ms <- liftIO $ Database.selectStatements (Just person_name)
-  return $ [ (truthValue c, length g) | g@(c:_) <- group $ sort ms]
+  ms <- liftIO $ Database.selectStatements person_name
+  return $ fmap makePT $ (groupByTruth . sort) ms
+
+makePT :: [PersonStatement] -> (Person, PersonTruthiness)
+makePT s = (personStatementPerson $ head s, toPT s)
+
+toPT statements = PersonTruthiness {
+  tVal = (personStatementTruthValue $ head statements),
+  total = length statements}
 
 listPersons :: Handler [Person]
 listPersons =
