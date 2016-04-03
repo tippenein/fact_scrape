@@ -9,7 +9,7 @@ var get = function(url, success) {
   })
 }
 
-var statementSource = "http://localhost:8081/statements/truthiness?person_name=";
+var statementSource = "http://localhost:8081/persons/truthiness?person_name=";
 var TruthClient = {
   load: function(person, success, failure) {
     var uri = statementSource + person;

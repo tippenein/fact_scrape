@@ -29,6 +29,7 @@ library
   build-depends:
       base ==4.*
     , bytestring
+    , aeson
     , cassava
     , HandsomeSoup
     , hxt
