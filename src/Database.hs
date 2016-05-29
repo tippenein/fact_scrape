@@ -51,7 +51,9 @@ instance Ord PersonStatement where
 persistValue (Entity _ v) = v
 
 migrateDb:: IO ()
-migrateDb = runDb $ runMigration migrateAll
+migrateDb = do
+  putStrLn "migrating database"
+  runDb $ runMigration migrateAll
 
 findPerson :: Text -> IO (Maybe (Entity Person))
 findPerson name = do
@@ -76,7 +78,8 @@ findOrCreatePersonByName name = do
 insertStatement :: PoliticalStatement -> IO ()
 insertStatement s = do
   person <- findOrCreatePersonByName (name s)
-  runDb $ insert_ $ PersonStatement person (truth s) (statedOn s) (statementLink s)
+  _ <- runDb $ insertBy $ PersonStatement person (truth s) (statedOn s) (statementLink s)
+  return ()
 
 insertStatements :: [PoliticalStatement] -> IO ()
 insertStatements = mapM_ insertStatement
