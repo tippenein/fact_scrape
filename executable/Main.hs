@@ -14,6 +14,7 @@ main = do
     "serve" -> serveIt
     "scrape" -> insertStatements =<< Scraper.getPageRange 1 1
     "history" -> insertStatements =<< Scraper.getHistoric
+    "migrate" -> migrateDb
     _ -> putStrLn "try 'serve', 'scrape' or 'history'"
 
 startWithPort port = do
@@ -21,6 +22,7 @@ startWithPort port = do
   Exception.catch
     (runServer port)
     (\ Exception.UserInterrupt -> putStrLn "\nStopping...")
+
 
 serveIt = do
   migrateDb

@@ -86,7 +86,7 @@ var Application = React.createClass({
 ReactDOM.render(
   <Application
     flux={flux}
-    personSource="http://localhost:8081/persons"
+    personSource="/truth/api/persons"
   />,
   document.getElementById('main')
 );
