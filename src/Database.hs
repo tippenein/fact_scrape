@@ -13,17 +13,20 @@
 module Database where
 
 -- import Data.Time.Clock (UTCTime (..))
+import Data.List (groupBy)
 import Data.Text (Text, unpack)
 import Database.Persist
 import Database.Persist.Sqlite
 import Database.Persist.TH
-import Data.List (groupBy)
 -- import Database.Esqueleto
-import GHC.Generics
 import Data.Time.Calendar (Day)
+import GHC.Generics
 -- import Control.Monad (mapM_)
 
 import Politifact.Scraper
+
+dbName :: FilePath
+dbName = "statements.db"
 
 runDb = runSqlite "statements.db"
 
@@ -41,7 +44,7 @@ PersonStatement json
     deriving Eq Show Generic
 |]
 
-groupByTruth = groupBy (\a b -> personStatementTruthValue a == personStatementTruthValue b)
+
 instance Ord PersonStatement where
   (PersonStatement _ t1 _ _ ) `compare` (PersonStatement _ t2 _ _) = t1 `compare` t2
 
@@ -51,11 +54,14 @@ migrateDb:: IO ()
 migrateDb = runDb $ runMigration migrateAll
 
 findPerson :: Text -> IO (Maybe (Entity Person))
-findPerson str = do
-    people <- runDb $ selectList [PersonName ==. str] []
+findPerson name = do
+    people <- runDb $ selectList [PersonName ==. name] []
     case length people of
       0 -> return Nothing
       _ -> return $ Just (head people)
+
+-- groupByTruth = ((==) `on` personStatementTruthValue)
+groupByTruth = groupBy (\a b -> personStatementTruthValue a == personStatementTruthValue b)
 
 findOrCreatePersonByName :: Text -> IO Person
 findOrCreatePersonByName name = do
@@ -73,8 +79,7 @@ insertStatement s = do
   runDb $ insert_ $ PersonStatement person (truth s) (statedOn s) (statementLink s)
 
 insertStatements :: [PoliticalStatement] -> IO ()
-insertStatements statements = do
-  mapM_ insertStatement statements
+insertStatements = mapM_ insertStatement
 
 selectPersons :: IO [Person]
 selectPersons = do

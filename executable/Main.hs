@@ -1,18 +1,23 @@
 module Main where
 
-import qualified Control.Exception       as Exception
-import Database
-import Server
-import Politifact.Scraper as Scraper
+import qualified Control.Exception as Exception
 
-seedDb :: IO ()
-seedDb = do
-  migrateDb
-  insertStatements =<< Scraper.getAll
+import Database
+import Politifact.Scraper as Scraper
+import Server
+import System.Environment
 
 main :: IO ()
 main = do
-  -- seedDb
+  [args] <- getArgs
+  case args of
+    "serve" -> serveIt
+    "scrape" -> insertStatements =<< Scraper.getPageRange 1 1
+    "history" -> insertStatements =<< Scraper.getHistoric
+    _ -> putStrLn "try 'serve', 'scrape' or 'history'"
+
+serveIt = do
+  migrateDb
   let port = 8081 :: Int
   putStrLn ("Starting on port " ++ show port ++ "...")
   Exception.catch

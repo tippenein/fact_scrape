@@ -38,7 +38,6 @@ library
     , persistent-template
     , persistent-sqlite
     , esqueleto
-    , pipes
     , servant >= 0.4
     , servant-server >= 0.4
     , text
@@ -59,6 +58,7 @@ executable scrape-the-truth
   build-depends:
       base -any
     , scrape-the-truth -any
+    , directory
   default-language: Haskell2010
   ghc-options:
     -fwarn-unused-imports -fno-warn-missing-signatures -threaded -rtsopts -with-rtsopts=-N

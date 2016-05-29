@@ -2,10 +2,9 @@
 
 module Politifact.Scraper where
 
-import qualified Data.Text as T
--- import Pipes
-import Data.Time.Calendar (fromGregorian, Day)
 import Control.Concurrent (threadDelay)
+import qualified Data.Text as T
+import Data.Time.Calendar (Day, fromGregorian)
 import Text.HandsomeSoup
 import Text.XML.HXT.Core
 
@@ -38,7 +37,7 @@ pullDate c = fromGregorian y m d
     d = read (url !! 5) :: Int
     url = map (T.unpack) $ T.splitOn "/" c
 
-monthFromString s = 
+monthFromString s =
   case s of
     "jan" -> 1
     "feb" -> 2
@@ -66,13 +65,11 @@ type HtmlDoc = IOSArrow XmlTree XmlTree
 docFromUrl :: Integer -> HtmlDoc
 docFromUrl i = fromUrl (baseUrl ++ statementUrl ++ show i)
 
--- getAll :: Proxy p => Producer p [Statement] IO ()
-getAll = do
-  s <- mapM (\i -> threadDelay 1000000 >> statementsFor (docFromUrl i)) [1..2] -- 196 total
+getPageRange start finish = do
+  s <- mapM (\i -> threadDelay 1000000 >> statementsFor (docFromUrl i)) [start..finish]
   return $ concat s
 
--- getAllProducer= do
---   s <- mapM (\i -> threadDelay 1000000 >> statementsForPage i) [1..196]
---   yield $ concat s
+getPage n =
+  return $ statementsFor $ docFromUrl n
 
-
+getHistoric = getPageRange 1 196
