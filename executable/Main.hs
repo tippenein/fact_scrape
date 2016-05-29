@@ -16,10 +16,15 @@ main = do
     "history" -> insertStatements =<< Scraper.getHistoric
     _ -> putStrLn "try 'serve', 'scrape' or 'history'"
 
-serveIt = do
-  migrateDb
-  let port = 8081 :: Int
+startWithPort port = do
   putStrLn ("Starting on port " ++ show port ++ "...")
   Exception.catch
     (runServer port)
     (\ Exception.UserInterrupt -> putStrLn "\nStopping...")
+
+serveIt = do
+  migrateDb
+  port <- getEnv "PORT"
+  case port of
+    "" -> startWithPort 8003
+    _ -> startWithPort (read port)
