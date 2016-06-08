@@ -12,16 +12,15 @@
 {-# LANGUAGE TypeFamilies               #-}
 module Database where
 
--- import Data.Time.Clock (UTCTime (..))
-import Data.List (groupBy)
+import Data.Aeson
+import Data.Int (Int64)
 import Data.Text (Text, unpack)
-import Database.Persist
-import Database.Persist.Sqlite
-import Database.Persist.TH
--- import Database.Esqueleto
 import Data.Time.Calendar (Day)
-import GHC.Generics
--- import Control.Monad (mapM_)
+import Database.Esqueleto
+import qualified Database.Persist as P
+import Database.Persist.Sqlite hiding ((==.))
+import Database.Persist.TH
+import GHC.Generics hiding (from)
 
 import Politifact.Scraper
 
@@ -31,76 +30,86 @@ dbName = "statements.db"
 runDb = runSqlite "statements.db"
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Person json
+Person sql=persons
     name Text
+    UniquePersonName name
     deriving Eq Show Generic
 
-PersonStatement json
-    person Person
+PersonStatement json sql=person_statements
+    person PersonId
     truthValue Text
     statedOn Day
     statementLink Text
     UniqueStatement person statementLink
     deriving Eq Show Generic
+
+StatementContent json sql=statement_bodies
+    personStatement PersonStatementId
+    synopsis Text
 |]
 
+instance ToJSON (Entity Person) where
+  toJSON (Entity pid (Person personName )) = object
+    [ "id" .= pid
+    , "name" .= personName
+    ]
 
 instance Ord PersonStatement where
   (PersonStatement _ t1 _ _ ) `compare` (PersonStatement _ t2 _ _) = t1 `compare` t2
-
-persistValue (Entity _ v) = v
 
 migrateDb:: IO ()
 migrateDb = do
   putStrLn "migrating database"
   runDb $ runMigration migrateAll
 
-findPerson :: Text -> IO (Maybe (Entity Person))
-findPerson name = do
-    people <- runDb $ selectList [PersonName ==. name] []
-    case length people of
-      0 -> return Nothing
-      _ -> return $ Just (head people)
-
--- groupByTruth = ((==) `on` personStatementTruthValue)
-groupByTruth = groupBy (\a b -> personStatementTruthValue a == personStatementTruthValue b)
-
-findOrCreatePersonByName :: Text -> IO Person
+findOrCreatePersonByName :: Text -> IO (Key Person)
 findOrCreatePersonByName name = do
-  p <- findPerson name
+  p <- runDb $ getBy $ UniquePersonName name
   case p of
     Nothing -> do
-      _ <- runDb $ insert $ Person name
+      personId <- runDb $ insert $ Person name
       putStrLn $ "inserted " ++ unpack name
-      return $ Person name
-    Just person -> return $ persistValue person
+      return personId
+    Just (Entity personId _) -> return personId
+
+findPersonMaybe :: Int64 -> IO (Maybe Person)
+findPersonMaybe person_id =
+  runDb $ get (toSqlKey person_id)
 
 insertStatement :: PoliticalStatement -> IO ()
 insertStatement s = do
-  person <- findOrCreatePersonByName (name s)
-  _ <- runDb $ insertBy $ PersonStatement person (truth s) (statedOn s) (statementLink s)
+  personId <- findOrCreatePersonByName (name s)
+  _ <- runDb $ insertBy $ PersonStatement personId (truth s) (statedOn s) (statementLink s)
   return ()
 
 insertStatements :: [PoliticalStatement] -> IO ()
 insertStatements = mapM_ insertStatement
 
-selectPersons :: IO [Person]
-selectPersons = do
-  dbPersons <- runDb $ selectList [] []
-  return $ map persistValue dbPersons
+selectPersons :: IO [Entity Person]
+selectPersons = runDb $ selectList [] []
 
+selectStatementsByName :: Maybe Text -> IO (Maybe [PersonStatement])
+selectStatementsByName person_name =
+  case person_name of
+    Nothing -> do
+      g <- runDb $ selectList [] [LimitTo 25]
+      return $ Just $ map entityVal g
+    Just n -> do
+      mperson <- runDb $ selectFirst [PersonName P.==. n] []
+      case mperson of
+        Nothing -> return Nothing
+        Just (Entity i _) -> Just <$> selectStatements (fromSqlKey i)
 
--- TODO fix this asap
-selectStatements :: Maybe Text -> IO [PersonStatement]
-selectStatements name = do
-  s <- runDb $ selectList [] []
-  let statements = map persistValue s
-  case name of
-    Nothing -> return statements
-    Just n  -> return $ filterName n statements
+selectStatements :: Int64 -> IO [PersonStatement]
+selectStatements person_id = do
+  statements <- runDb $
+    select $ from $ \personStatement -> do
+    let subquery =
+          from $ \person_table -> do
+          where_ (person_table ^. PersonId ==. val (toSqlKey person_id))
+          return $ person_table ^. PersonId
+    where_ (personStatement ^. PersonStatementPerson ==. sub_select subquery)
+    groupBy (personStatement ^. PersonStatementTruthValue)
+    return personStatement
 
-filterName query = filter (\a -> query == (personName . personStatementPerson) a)
-
--- insertStatementsConsumer = do
---   runEffect $ for Scraper.getAll $ \statement -> do
---      lift $ print statement
+  return $ map entityVal statements

@@ -1,45 +1,34 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes       #-}
 module WebSpec (spec) where
 
 import Server (app)
 
 import Test.Hspec
-import Test.Hspec.Wai
+import Test.Hspec.Wai hiding (pending)
 import Test.Hspec.Wai.JSON
-import Data.Time.Calendar (fromGregorian)
-
-import Data.List
-import Database
 
 spec :: Spec
-spec = do
+spec =
   apiSpec
-  utilSpec
-
-
-utilSpec :: Spec
-utilSpec = do
-  describe "orderable PersonStatement" $ do
-    it "should group by truth values" $ do
-      let s1 = PersonStatement (Person "a") "truth" (fromGregorian 2012 1 1) "a"
-          s2 = PersonStatement (Person "b") "truth" (fromGregorian 2012 1 1) "b"
-          s3 = PersonStatement (Person "c") "lying" (fromGregorian 2012 1 1) "c"
-        in
-        -- ((groupByTruth . sort) [s1,s2,s3]) `shouldBe` [[s1,s2],[s3]]
-
-          (length  ((groupByTruth . sort) [s1,s2,s3])) `shouldBe` 2
 
 apiSpec :: Spec
 apiSpec = with (return app) $ do
-  describe "GET /persons" $ do
-    it "responds with 200" $ do
+  describe "GET /persons" $
+    it "responds with 200" $
       get "/persons" `shouldRespondWith` 200
 
-  describe "GET /statements" $ do
-    it "responds with 200" $ do
+  describe "GET /persons/:id" $ do
+    it "responds with 200" $
+      get "/persons/1" `shouldRespondWith` 200
+
+    it "responds with 404" $
+      get "/persons/9001" `shouldRespondWith` 404
+
+  describe "GET /statements" $
+    it "responds with 200" $
       get "/statements" `shouldRespondWith` 200
 
-  describe "GET /statements with non-existentent name" $ do
-    it "responds with empty" $ do
+  describe "GET /statements with non-existentent name" $
+    it "responds with empty" $
       get "/statements?person_name=Nope" `shouldRespondWith` [json|[]|]

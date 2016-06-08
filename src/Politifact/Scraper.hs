@@ -23,9 +23,9 @@ data PoliticalStatement
 buildStatement :: [(String,String,String)] -> [PoliticalStatement]
 buildStatement = fmap (\(a,b,c) ->
   PoliticalStatement {
-    truth = (T.pack a),
-    name = T.strip $ (T.pack b),
-    statementLink = (T.pack c),
+    truth = T.pack a,
+    name = T.strip $ T.pack b,
+    statementLink = T.pack c,
     statedOn = pullDate (T.pack c)}
   )
 
@@ -35,7 +35,7 @@ pullDate c = fromGregorian y m d
     y = read (url !! 3) :: Integer
     m = monthFromString $ url !! 4
     d = read (url !! 5) :: Int
-    url = map (T.unpack) $ T.splitOn "/" c
+    url = map T.unpack $ T.splitOn "/" c
 
 monthFromString s =
   case s of
@@ -62,14 +62,22 @@ statementsFor doc = do
 
 type HtmlDoc = IOSArrow XmlTree XmlTree
 
-docFromUrl :: Integer -> HtmlDoc
-docFromUrl i = fromUrl (baseUrl ++ statementUrl ++ show i)
+docFromPage :: Integer -> HtmlDoc
+docFromPage i = fromUrl (baseUrl ++ statementUrl ++ show i)
 
 getPageRange start finish = do
-  s <- mapM (\i -> threadDelay 1000000 >> statementsFor (docFromUrl i)) [start..finish]
+  s <- mapM (\i -> threadDelay 1000000 >> statementsFor (docFromPage i)) [start..finish]
   return $ concat s
 
 getPage n =
-  return $ statementsFor $ docFromUrl n
+  return $ statementsFor $ docFromPage n
 
 getHistoric = getPageRange 1 196
+
+-- data StatementBody = StatementBody { synopsis :: T.Text }
+
+statementBodyFor :: T.Text -> IO T.Text
+statementBodyFor link = do
+  doc <- pure $ fromUrl (baseUrl ++ T.unpack link)
+  body <- runX $ doc >>> css "div.statement__text" >>> isText >>> getText
+  return $ T.pack (head body)
