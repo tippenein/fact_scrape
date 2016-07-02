@@ -30,12 +30,12 @@ dbName = "statements.db"
 runDb = runSqlite "statements.db"
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Person sql=persons
+Person
     name Text
     UniquePersonName name
     deriving Eq Show Generic
 
-PersonStatement json sql=person_statements
+PersonStatement json
     person PersonId
     truthValue Text
     statedOn Day
