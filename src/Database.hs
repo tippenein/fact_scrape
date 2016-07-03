@@ -30,12 +30,12 @@ dbName = "statements.db"
 runDb = runSqlite "statements.db"
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Person
+Person sql=persons
     name Text
     UniquePersonName name
     deriving Eq Show Generic
 
-PersonStatement json
+PersonStatement json sql=person_statements
     person PersonId
     truthValue Text
     statedOn Day
@@ -46,8 +46,22 @@ PersonStatement json
 StatementContent json sql=statement_bodies
     personStatement PersonStatementId
     synopsis Text
+
+PersonStatementOld json sql=person_statement
+    person Person
+    truthValue Text
+    statedOn Day
+    statementLink Text
+    deriving Eq Show Generic
 |]
 
+instance FromJSON Person where
+  parseJSON = withObject "person" $ \o ->
+    Person <$> o .: "name"
+
+instance ToJSON Person where
+  toJSON (Person personName ) = object
+    [ "name" .= personName ]
 instance ToJSON (Entity Person) where
   toJSON (Entity pid (Person personName )) = object
     [ "id" .= pid

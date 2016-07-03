@@ -36,17 +36,17 @@ findPerson person_id = do
 listTruthiness :: Int64 -> Handler [PersonTruthiness]
 listTruthiness person_id = do
   ms <- liftIO $ Database.selectStatements person_id
-  return $ makePT ms
+  pure $ makePT ms
 
 groupByTruth = groupBy (\a b -> personStatementTruthValue a == personStatementTruthValue b)
 
 makePT :: [PersonStatement] -> [PersonTruthiness]
-makePT statements = map truthTotals grouped
+makePT statements = fmap truthTotals grouped
   where
     grouped = (groupByTruth . sort) statements
     truthTotals s = PersonTruthiness
       { tVal = personStatementTruthValue $ head s
-        , total = length s }
+      , total = length s }
 
 listPersons :: Handler [Entity Person]
 listPersons =
@@ -56,7 +56,7 @@ listStatements :: Maybe Text -> Handler [PersonStatement]
 listStatements name = do
   statements <- liftIO $ Database.selectStatementsByName name
   case statements of
-    Nothing -> return []
+    Nothing -> pure []
     Just r -> right r
 
 middlewares = simpleCors . logStdout
