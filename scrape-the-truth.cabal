@@ -38,8 +38,9 @@ library
     , persistent-template
     , persistent-sqlite
     , esqueleto
-    , servant >= 0.4
-    , servant-server >= 0.4
+    , servant >= 0.5 && < 0.6
+    , servant-server >= 0.5 && < 0.6
+    , servant-js >= 0.5 && < 0.6
     , text
     , time
     , transformers
@@ -82,7 +83,15 @@ test-suite tests
       base -any
     , scrape-the-truth -any
     , hspec
+    , http-types
     , hspec-wai
+    , monad-logger
+    , servant-server
+    , persistent
+    , bytestring
+    , aeson
+    , persistent-sqlite
+    , wai-extra
     , time
     , text
     , hspec-wai-json

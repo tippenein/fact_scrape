@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Server (runServer, app) where
+module Server (runServer, app, server) where
 
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 import Data.Int (Int64)
 import Data.List (groupBy, sort)
 import Data.Text (Text)
@@ -24,14 +24,14 @@ server =
   :<|> listStatements
   :<|> listTruthiness
 
-type Handler a = EitherT ServantErr IO a
+type Handler a = ExceptT ServantErr IO a
 
 findPerson :: Int64 -> Handler (Entity Person)
 findPerson person_id = do
   ms <- liftIO $ Database.findPersonMaybe person_id
   case ms of
-    Nothing -> left err404
-    Just m -> right (Entity (toSqlKey person_id) m)
+    Nothing -> throwE err404
+    Just m -> pure $ Entity (toSqlKey person_id) m
 
 listTruthiness :: Int64 -> Handler [PersonTruthiness]
 listTruthiness person_id = do
@@ -57,7 +57,7 @@ listStatements name = do
   statements <- liftIO $ Database.selectStatementsByName name
   case statements of
     Nothing -> pure []
-    Just r -> right r
+    Just r -> pure r
 
 middlewares = simpleCors . logStdout
 

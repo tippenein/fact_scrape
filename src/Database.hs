@@ -13,6 +13,7 @@
 module Database where
 
 import Data.Aeson
+import Data.Foldable
 import Data.Int (Int64)
 import Data.Text (Text, unpack)
 import Data.Time.Calendar (Day)
@@ -27,6 +28,7 @@ import Politifact.Scraper
 dbName :: FilePath
 dbName = "statements.db"
 
+runDbWith a = runSqlite a
 runDb = runSqlite "statements.db"
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
@@ -84,8 +86,8 @@ findOrCreatePersonByName name = do
     Nothing -> do
       personId <- runDb $ insert $ Person name
       putStrLn $ "inserted " ++ unpack name
-      return personId
-    Just (Entity personId _) -> return personId
+      pure personId
+    Just (Entity personId _) -> pure personId
 
 findPersonMaybe :: Int64 -> IO (Maybe Person)
 findPersonMaybe person_id =
@@ -95,21 +97,21 @@ insertStatement :: PoliticalStatement -> IO ()
 insertStatement s = do
   personId <- findOrCreatePersonByName (name s)
   _ <- runDb $ insertBy $ PersonStatement personId (truth s) (statedOn s) (statementLink s)
-  return ()
+  pure ()
 
 insertStatements :: [PoliticalStatement] -> IO ()
-insertStatements = mapM_ insertStatement
+insertStatements = traverse_ insertStatement
 
 selectStatementsByName :: Maybe Text -> IO (Maybe [PersonStatement])
 selectStatementsByName person_name =
   case person_name of
     Nothing -> do
       g <- runDb $ selectList [] [LimitTo 25]
-      return $ Just $ map entityVal g
+      pure $ Just $ map entityVal g
     Just n -> do
       mperson <- runDb $ selectFirst [PersonName P.==. n] []
       case mperson of
-        Nothing -> return Nothing
+        Nothing -> pure Nothing
         Just (Entity i _) -> Just <$> selectStatements (fromSqlKey i)
 
 selectPersons :: IO [Entity Person]

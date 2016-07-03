@@ -13,6 +13,7 @@ import Database
 import Database.Persist
 import GHC.Generics
 import Servant.API
+import Servant.JS
 
 data PersonTruthiness = PersonTruthiness
   { tVal  :: Text
@@ -46,3 +47,5 @@ type ListTruthiness =
   :> "truthiness"
   :> Get '[JSON] [PersonTruthiness]
 
+generateJavaScript :: IO ()
+generateJavaScript = writeJSForAPI (Proxy :: Proxy TruthApi) vanillaJS "../site/assets/api.js"

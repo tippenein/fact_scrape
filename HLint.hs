@@ -2,7 +2,7 @@ ignore "Use on"
 ignore "Avoid Lambda"
 ignore "Eta reduce"
 
-error "generalize fmap"  = map  ==> fmap
+-- error "generalize fmap"  = map  ==> fmap
 
 -- AMP fallout
 error "generalize mapM"  = mapM  ==> traverse
