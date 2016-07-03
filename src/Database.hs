@@ -16,9 +16,9 @@ import Data.Aeson
 import Data.Int (Int64)
 import Data.Text (Text, unpack)
 import Data.Time.Calendar (Day)
-import Database.Esqueleto
+-- import Database.Esqueleto
 import qualified Database.Persist as P
-import Database.Persist.Sqlite hiding ((==.))
+import Database.Persist.Sqlite
 import Database.Persist.TH
 import GHC.Generics hiding (from)
 
@@ -62,6 +62,7 @@ instance FromJSON Person where
 instance ToJSON Person where
   toJSON (Person personName ) = object
     [ "name" .= personName ]
+
 instance ToJSON (Entity Person) where
   toJSON (Entity pid (Person personName )) = object
     [ "id" .= pid
@@ -99,9 +100,6 @@ insertStatement s = do
 insertStatements :: [PoliticalStatement] -> IO ()
 insertStatements = mapM_ insertStatement
 
-selectPersons :: IO [Entity Person]
-selectPersons = runDb $ selectList [] []
-
 selectStatementsByName :: Maybe Text -> IO (Maybe [PersonStatement])
 selectStatementsByName person_name =
   case person_name of
@@ -114,16 +112,15 @@ selectStatementsByName person_name =
         Nothing -> return Nothing
         Just (Entity i _) -> Just <$> selectStatements (fromSqlKey i)
 
-selectStatements :: Int64 -> IO [PersonStatement]
-selectStatements person_id = do
-  statements <- runDb $
-    select $ from $ \personStatement -> do
-    let subquery =
-          from $ \person_table -> do
-          where_ (person_table ^. PersonId ==. val (toSqlKey person_id))
-          return $ person_table ^. PersonId
-    where_ (personStatement ^. PersonStatementPerson ==. sub_select subquery)
-    groupBy (personStatement ^. PersonStatementTruthValue)
-    return personStatement
+selectPersons :: IO [Entity Person]
+selectPersons = runDb $ selectList [] []
 
-  return $ map entityVal statements
+-- XXX Generalize this type
+-- selectWhere :: Int64 -> EntityField a (Key Person) -> IO [Entity a]
+selectWhere :: Int64 -> EntityField PersonStatement (Key Person) -> IO [Entity PersonStatement]
+selectWhere i t =
+  runDb $ selectList [t ==. toSqlKey i] []
+
+selectStatements :: Int64 -> IO [PersonStatement]
+selectStatements person_id =
+  map entityVal <$> selectWhere person_id PersonStatementPerson
