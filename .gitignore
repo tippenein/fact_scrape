@@ -20,5 +20,6 @@ cabal.sandbox.config
 *.hp
 .stack-work/
 statements.db
+*.db
 *-shm
 *-wal

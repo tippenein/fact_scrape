@@ -6,6 +6,7 @@ import Api
 import Database
 import Server (server)
 
+import qualified Control.Exception as Exception
 import Data.Aeson (ToJSON, encode)
 import Data.ByteString (ByteString)
 import Database.Persist (deleteWhere, insert, (>=.))
@@ -14,6 +15,7 @@ import Database.Persist.Sqlite (runMigration, runSqlConn, withSqliteConn)
 import Network.HTTP.Types.Method (methodPost)
 import Network.Wai.Test (SResponse)
 import Servant.Server (serve)
+import qualified System.Environment as Env
 import Test.Hspec
 import Test.Hspec.Wai hiding (pending)
 import Test.Hspec.Wai.JSON
@@ -50,8 +52,14 @@ postJson :: (ToJSON a) => ByteString -> a -> WaiSession SResponse
 postJson path =
   request methodPost path [("Content-Type", "application/json")] . encode
 
-app = runDbWith ":memory:" $ do
-      runMigration migrateAll
-      deleteWhere [PersonStatementId >=. toSqlKey 0]
-      _ <- insert $ Person "derp"
-      return . serve truthApi $ server
+withTestDb = Exception.bracket setTest unsetTest
+  where
+    setTest = Env.setEnv "SERVANT_ENV" "test"
+    unsetTest = const $ Env.unsetEnv "SERVANT_ENV"
+
+app = withTestDb $ do
+  const $ runDb $ do
+    runMigration migrateAll
+    deleteWhere [PersonId >=. toSqlKey 0]
+    _ <- insert $ Person "derp"
+    return . serve truthApi $ server

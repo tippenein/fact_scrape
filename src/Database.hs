@@ -22,14 +22,22 @@ import qualified Database.Persist as P
 import Database.Persist.Sqlite
 import Database.Persist.TH
 import GHC.Generics hiding (from)
+import System.IO.Unsafe
 
 import Politifact.Scraper
+import System.Environment as Env
 
-dbName :: FilePath
-dbName = "statements.db"
+dbName :: Text
+dbName =
+  let env = unsafePerformIO $ Env.getEnv "SERVANT_ENV"
+  in
+    case env of
+      "test" -> "statements.test.db"
+      "production" -> "statements.db"
+      _ -> "statements.dev.db"
 
 runDbWith a = runSqlite a
-runDb = runSqlite "statements.db"
+runDb = runSqlite dbName
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person sql=persons
