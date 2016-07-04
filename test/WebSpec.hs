@@ -15,6 +15,7 @@ import Database.Persist.Sqlite (runMigration, runSqlConn, withSqliteConn)
 import Network.HTTP.Types.Method (methodPost)
 import Network.Wai.Test (SResponse)
 import Servant.Server (serve)
+import System.Directory
 import qualified System.Environment as Env
 import Test.Hspec
 import Test.Hspec.Wai hiding (pending)
@@ -55,7 +56,9 @@ postJson path =
 withTestDb = Exception.bracket setTest unsetTest
   where
     setTest = Env.setEnv "SERVANT_ENV" "test"
-    unsetTest = const $ Env.unsetEnv "SERVANT_ENV"
+    unsetTest = do
+      _ <- const $ removeFile "statement.test.db"
+      const $ Env.unsetEnv "SERVANT_ENV"
 
 app = withTestDb $ do
   const $ runDb $ do
