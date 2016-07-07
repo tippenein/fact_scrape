@@ -29,6 +29,7 @@ library
   build-depends:
       base ==4.*
     , bytestring
+    , conduit
     , aeson
     , cassava
     , HandsomeSoup
@@ -94,6 +95,7 @@ test-suite tests
     , wai-extra
     , time
     , text
+    , directory
     , hspec-wai-json
     , HandsomeSoup
     , hxt

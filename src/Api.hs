@@ -29,7 +29,10 @@ type TruthApi =
   :<|> ListStatements
   :<|> ListTruthiness
 
-type ListPersons = "persons" :> Get '[JSON] [Entity Person]
+type ListPersons =
+     "persons"
+  :> QueryParam "q" Text
+  :> Get '[JSON] [Entity Person]
 
 type FindPerson =
      "persons"

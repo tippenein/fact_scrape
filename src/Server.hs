@@ -48,9 +48,9 @@ makePT statements = fmap truthTotals grouped
       { tVal = personStatementTruthValue $ head s
       , total = length s }
 
-listPersons :: Handler [Entity Person]
-listPersons =
-  liftIO Database.selectPersons
+listPersons :: Maybe Text -> Handler [Entity Person]
+listPersons mquery =
+  liftIO $ Database.selectPersons mquery
 
 listStatements :: Maybe Text -> Handler [PersonStatement]
 listStatements name = do

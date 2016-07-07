@@ -2,6 +2,8 @@
 node_modules/
 npm-debug.*
 site/bundle.js
+site/bower_components
+site/output
 
 dist
 cabal-dev
