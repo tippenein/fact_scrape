@@ -34,6 +34,10 @@ apiSpec = with app $ do
     it "responds with correct payload" $ do
       get "/persons/1" `shouldRespondWith` [json|{name: "derp", id: 1}|]
 
+  describe "GET /persons?q=not" $ do
+    it "responds with only the matching person" $
+      get "/persons?q=not" `shouldRespondWith` [json|[{name: "not", id: 2}]|]
+
   describe "GET /persons/:id" $ do
     it "responds with 200" $
       get "/persons/1" `shouldRespondWith` 200
@@ -65,4 +69,5 @@ app = withTestDb $ do
     runMigration migrateAll
     deleteWhere [PersonId >=. toSqlKey 0]
     _ <- insert $ Person "derp"
+    _ <- insert $ Person "not"
     return . serve truthApi $ server

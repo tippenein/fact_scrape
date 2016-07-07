@@ -17,7 +17,7 @@ import Data.Foldable
 import Data.Int (Int64)
 import Data.Text (Text, unpack)
 import Data.Time.Calendar (Day)
--- import Database.Esqueleto
+import qualified Database.Esqueleto as E
 import qualified Database.Persist as P
 import Database.Persist.Sqlite
 import Database.Persist.TH
@@ -29,12 +29,14 @@ import System.Environment as Env
 
 dbName :: Text
 dbName =
-  let env = unsafePerformIO $ Env.getEnv "SERVANT_ENV"
+  let env = unsafePerformIO $ Env.lookupEnv "SERVANT_ENV"
   in
     case env of
-      "test" -> "statements.test.db"
-      "production" -> "statements.db"
-      _ -> "statements.dev.db"
+      Nothing -> "statements.dev.db"
+      Just a -> case a of
+        "test" -> "statements.test.db"
+        "production" -> "statements.db"
+        _ -> "statements.dev.db"
 
 runDbWith a = runSqlite a
 runDb = runSqlite dbName
@@ -122,8 +124,15 @@ selectStatementsByName person_name =
         Nothing -> pure Nothing
         Just (Entity i _) -> Just <$> selectStatements (fromSqlKey i)
 
-selectPersons :: IO [Entity Person]
-selectPersons = runDb $ selectList [] []
+selectPersons :: Maybe Text -> IO [Entity Person]
+selectPersons mquery =
+  case mquery of
+    Nothing -> runDb $ selectList [] []
+    Just query -> do
+      -- "SELECT ?? FROM persons WHERE name LIKE '%" <> query <> "%'"
+      runDb $ E.select $ E.from $ \persons -> do
+        E.where_ (persons E.^. PersonName `E.like` (E.%) E.++. E.val query E.++. (E.%))
+        pure persons
 
 -- XXX Generalize this type
 -- selectWhere :: Int64 -> EntityField a (Key Person) -> IO [Entity a]
