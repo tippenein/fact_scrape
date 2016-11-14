@@ -1,4 +1,4 @@
-name: scrape-the-truth
+name: truth
 version: 0.0.0
 cabal-version: >=1.10
 build-type: Simple

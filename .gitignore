@@ -25,3 +25,5 @@ statements.db
 *.db
 *-shm
 *-wal
+**/TAGS
+**.#*

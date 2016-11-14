@@ -1,29 +1,34 @@
-{-# LANGUAGE DataKinds      #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric  #-}
-{-# LANGUAGE TypeOperators  #-}
+{-# LANGUAGE TypeOperators #-}
 
-module Api where
+-- | API definition for truth.
+module Truth.API
+  ( API
+  , api
+  , PersonTruthiness(..)
+  ) where
+
+import Protolude
 
 import Data.Aeson
-import Data.Int (Int64)
-import Data.Proxy
-import Data.Text (Text)
-import Database
-import Database.Persist
-import GHC.Generics
 import Servant.API
-import Servant.JS
+
+import Data.Text (Text)
+import Truth.Server.Database
+import Database.Persist
 
 data PersonTruthiness = PersonTruthiness
   { tVal  :: Text
   , total :: Int
   } deriving (Show, ToJSON, Generic, Eq)
 
-truthApi :: Proxy TruthApi
-truthApi = Proxy
+-- | Value-level representation of API.
+api :: Proxy API
+api = Proxy
 
-type TruthApi =
+type API =
        ListPersons
   :<|> FindPerson
   :<|> ListStatements
@@ -49,6 +54,3 @@ type ListTruthiness =
   :> Capture "person_id" Int64
   :> "truthiness"
   :> Get '[JSON] [PersonTruthiness]
-
-generateJavaScript :: IO ()
-generateJavaScript = writeJSForAPI (Proxy :: Proxy TruthApi) vanillaJS "../site/assets/api.js"

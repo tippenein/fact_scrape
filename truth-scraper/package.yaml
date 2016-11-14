@@ -1,0 +1,41 @@
+name: truth-scraper
+version: 0.1.0
+synopsis: 
+description: Please see README.md
+maintainer: tippenein <tippenein@gmail.com>
+license: Apache
+github: tippenein/truth
+category: Web
+
+ghc-options: -Wall -Werror -fno-warn-missing-signatures
+default-extensions:
+  - NoImplicitPrelude
+  - OverloadedStrings
+  - RecordWildCards
+
+dependencies:
+  - base >= 4.9 && < 5
+  - text
+  - protolude
+  - time
+
+library:
+  source-dirs: src
+  dependencies:
+    - aeson
+    - http-media
+    - servant
+    - hxt
+    - HandsomeSoup
+    - text 
+
+tests:
+  truth-scraper-tests:
+    main: Main.hs
+    source-dirs: tests
+    dependencies:
+      - truth-scraper
+      - hxt
+      - tasty
+      - tasty-hspec
+      - hspec

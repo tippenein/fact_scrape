@@ -1,7 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
+module Truth.Scraper.Politifact where
 
-module Politifact.Scraper where
 
+import Prelude
 import Control.Concurrent (threadDelay)
 import qualified Data.Text as T
 import Data.Time.Calendar (Day, fromGregorian)
@@ -18,9 +18,9 @@ data PoliticalStatement
   , name          :: T.Text
   , statedOn      :: Day
   , statementLink :: T.Text
-  } deriving (Show)
+  }
 
-buildStatement :: [(String,String,String)] -> [PoliticalStatement]
+-- buildStatement :: [(String,String,String)] -> [PoliticalStatement]
 buildStatement = fmap (\(a,b,c) ->
   PoliticalStatement {
     truth = T.pack a,
@@ -58,7 +58,7 @@ statementsFor doc = do
   truths <- runX $ doc >>> css "div.meter img" ! "alt"
   names <-  runX $ doc >>> css "div.mugshot img" ! "alt"
   statements <- runX $ doc >>> css "p.statement__text a" ! "href"
-  return $ buildStatement (zip3 truths names statements)
+  pure $ buildStatement (zip3 truths names statements)
 
 type HtmlDoc = IOSArrow XmlTree XmlTree
 
@@ -66,18 +66,17 @@ docFromPage :: Integer -> HtmlDoc
 docFromPage i = fromUrl (baseUrl ++ statementUrl ++ show i)
 
 getPageRange start finish = do
-  s <- mapM (\i -> threadDelay 1000000 >> statementsFor (docFromPage i)) [start..finish]
-  return $ concat s
+  s <- traverse (\i -> threadDelay 1000000 >> statementsFor (docFromPage i)) [start..finish]
+  pure $ concat s
 
 getPage n =
-  return $ statementsFor $ docFromPage n
+  pure $ statementsFor $ docFromPage n
 
 getHistoric = getPageRange 1 196
 
 -- data StatementBody = StatementBody { synopsis :: T.Text }
 
-statementBodyFor :: T.Text -> IO T.Text
 statementBodyFor link = do
   doc <- pure $ fromUrl (baseUrl ++ T.unpack link)
   body <- runX $ doc >>> css "div.statement__text" >>> isText >>> getText
-  return $ T.pack (head body)
+  pure $ T.pack $ head body

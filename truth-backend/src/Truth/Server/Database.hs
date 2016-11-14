@@ -10,21 +10,22 @@
 {-# LANGUAGE RecordWildCards            #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
-module Database where
+
+module Truth.Server.Database where
+
+import Protolude hiding (get)
 
 import Data.Aeson
-import Data.Foldable
 import Data.Int (Int64)
-import Data.Text (Text, unpack)
+import Data.Text (unpack)
 import Data.Time.Calendar (Day)
 import qualified Database.Esqueleto as E
 import qualified Database.Persist as P
 import Database.Persist.Sqlite
 import Database.Persist.TH
-import GHC.Generics hiding (from)
 import System.IO.Unsafe
 
-import Politifact.Scraper
+import Truth.Scraper
 import System.Environment as Env
 
 dbName :: Text
@@ -84,9 +85,10 @@ instance ToJSON (Entity Person) where
 instance Ord PersonStatement where
   (PersonStatement _ t1 _ _ ) `compare` (PersonStatement _ t2 _ _) = t1 `compare` t2
 
-migrateDb:: IO ()
+migrateDb :: IO ()
 migrateDb = do
-  putStrLn "migrating database"
+  -- Log.withLogging logLevel $
+  --   Log.log Notice (text "migrating db")
   runDb $ runMigration migrateAll
 
 findOrCreatePersonByName :: Text -> IO (Key Person)

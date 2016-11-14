@@ -1,0 +1,56 @@
+name: truth-backend
+version: 0.1.0
+synopsis: One line description of project
+description: Please see README.md
+maintainer: tippenein <tippenein@gmail.com>
+license: Apache
+github: tippenein/truth
+category: Web
+
+ghc-options: -Wall -Werror -fno-warn-missing-signatures
+default-extensions:
+  - NoImplicitPrelude
+  - OverloadedStrings
+  - RecordWildCards
+
+dependencies:
+  - base >= 4.9 && < 5
+  - protolude
+  - persistent
+  - persistent-sqlite
+  - persistent-template
+  - esqueleto
+  - time
+  - text
+
+library:
+  source-dirs: src
+  dependencies:
+    - aeson
+    - bytestring
+    - exceptions
+    - http-media
+    - http-types
+    - logging-effect
+    - mtl
+    - optparse-applicative
+    - prometheus-client
+    - prometheus-metrics-ghc
+    - servant
+    - servant-server
+    - either
+    - time
+    - truth-scraper
+    - wai
+    - wai-extra
+    - wai-cors
+    - wai-middleware-prometheus
+    - warp
+    - wl-pprint-text
+
+executables:
+  truth:
+    main: Main.hs
+    source-dirs: cmd
+    dependencies:
+      - truth-backend
