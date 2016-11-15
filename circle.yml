@@ -1,19 +1,15 @@
 dependencies:
   cache_directories:
-    - "~/.cabal"
-    - "~/.local"
     - "~/.stack"
     - ".stack-work"
   pre:
-    - wget -q -O- https://s3.amazonaws.com/download.fpcomplete.com/ubuntu/fpco.key | sudo apt-key add -
-    - echo 'deb http://download.fpcomplete.com/ubuntu/trusty stable main'|sudo tee /etc/apt/sources.list.d/fpco.list
-    - sudo apt-get update
-    - sudo apt-get install -y stack
-  override:
-    - stack --no-terminal setup
-    - stack --no-terminal build --test --only-dependencies -j1
+    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.6 20
+    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.6 20
+    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 10
+    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 10
+    - curl -L https://github.com/commercialhaskell/stack/releases/download/v1.0.4/stack-1.0.4-linux-x86_64.tar.gz | tar zx -C /tmp
+    - sudo mv /tmp/stack-1.0.4-linux-x86_64/stack /usr/bin
 
-test:
   override:
-    - stack --no-terminal build --test
-    - stack --no-terminal test
+    - stack setup --no-system-ghc --install-ghc +RTS -M1024m -K1024m
+    - stack build --no-system-ghc --only-dependencies -j1P
