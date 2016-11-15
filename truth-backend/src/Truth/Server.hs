@@ -24,7 +24,6 @@ import qualified Prometheus as Prom
 import qualified Prometheus.Metric.GHC as Prom
 import Servant (serve)
 import Text.PrettyPrint.Leijen.Text (int, text)
-
 import Truth.API (api)
 import Truth.Server.Handlers (server)
 import Truth.Server.Instrument

@@ -16,6 +16,7 @@ default-extensions:
 dependencies:
   - base >= 4.9 && < 5
   - protolude
+  - http-types
   - persistent
   - persistent-sqlite
   - persistent-template
@@ -54,3 +55,24 @@ executables:
     source-dirs: cmd
     dependencies:
       - truth-backend
+
+tests:
+  truth-backend-tests:
+    main: Main.hs
+    source-dirs: tests
+    dependencies:
+      - aeson
+      - truth-backend
+      - hxt
+      - hspec
+      - hspec-wai-json
+      - directory
+      - hspec-wai
+      - wai-extra
+      - servant-server
+      - quickcheck-text
+      - servant-quickcheck
+      - logging-effect
+      - QuickCheck
+      - tasty
+      - tasty-hspec
